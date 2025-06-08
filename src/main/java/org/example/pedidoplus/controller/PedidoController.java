@@ -1,39 +1,104 @@
 package org.example.pedidoplus.controller;
 
+import org.example.pedidoplus.client.ClienteClient;
+import org.example.pedidoplus.client.EntregadorClient;
+import org.example.pedidoplus.client.RestauranteClient;
+import org.example.pedidoplus.dto.ClienteNomeDTO;
+import org.example.pedidoplus.dto.ItemCardapioDTO;
+import org.example.pedidoplus.dto.StatusEntregadorDTO;
 import org.example.pedidoplus.model.Pedido;
 import org.example.pedidoplus.service.PedidoService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/pedidos")
 public class PedidoController {
 
-    private final PedidoService service;
+    private final PedidoService pedidoService;
+    private final RestauranteClient restauranteClient;
+    private final ClienteClient clienteClient;
+    private final EntregadorClient entregadorClient;
 
-    public PedidoController(PedidoService service) {
-        this.service = service;
+
+    public PedidoController(PedidoService pedidoService, RestauranteClient restauranteClient, ClienteClient clienteClient, EntregadorClient entregadorClient) {
+        this.pedidoService = pedidoService;
+        this.restauranteClient = restauranteClient;
+        this.clienteClient = clienteClient;
+        this.entregadorClient = entregadorClient;
+
     }
 
-    @GetMapping
-    public List<Pedido> listarTodos() {
-        return service.listarTodosPedidos();
+    // Criar novo pedido
+    @PostMapping("/criar-pedidos")
+    public Pedido criarPedido(@RequestBody Pedido pedido) {
+        return pedidoService.criarPedido(pedido);
     }
 
-    @PostMapping
-    public Pedido criar(@RequestBody Pedido pedido) {
-        return service.criarPedido(pedido);
-    }
-
-    @GetMapping("/{id}")
-    public Pedido buscarPorId(@PathVariable String id) {
-        return service.consultarPorId(id).orElse(null);
-    }
-
+    // Listar todos pedidos de um cliente
     @GetMapping("/cliente/{clienteId}")
-    public List<Pedido> pedidosPorCliente(@PathVariable String clienteId) {
-        return service.listarPorCliente(clienteId);
+    public List<Pedido> listarPedidosPorCliente(@PathVariable String clienteId) {
+        return pedidoService.listarPedidosDoCliente(clienteId);
     }
+
+    // Detalhes de um pedido
+    @GetMapping("/{pedidoId}")
+    public Pedido detalhesPedido(@PathVariable String pedidoId) {
+        return pedidoService.consultarDetalhes(pedidoId).orElse(null);
+    }
+
+    // Valor total do pedido
+    @GetMapping("/{pedidoId}/valor-total")
+    public Double valorTotalPedido(@PathVariable String pedidoId) {
+        return pedidoService.consultarDetalhes(pedidoId)
+                .map(Pedido::getValorTotal)
+                .orElse(0.0);
+    }
+
+    @GetMapping({"", "/todos"})
+    public List<Pedido> listarTodosPedidos() {
+        return pedidoService.listarTodosPedidos();
+    }
+
+
+    // Listagem dos itens do cardápio via restauranteClient
+    @GetMapping("/itensCardapio")
+    public List<ItemCardapioDTO> listarItensDoCardapio() {
+        return restauranteClient.listarItensCardapio();
+    }
+
+    // Buscar apenas o nome do cliente pelo ID
+    @GetMapping("/cliente/{clienteId}/nome")
+    public ClienteNomeDTO buscarNomeCliente(@PathVariable String clienteId) {
+        return clienteClient.buscarClientePorId(clienteId);
+    }
+
+    @PutMapping("/{pedidoId}/entregador/{entregadorId}")
+    public ResponseEntity<Pedido> associarEntregadorAoPedido(
+            @PathVariable String pedidoId,
+            @PathVariable String entregadorId) {
+        Optional<Pedido> optional = pedidoService.consultarDetalhes(pedidoId);
+        if (optional.isEmpty()) return ResponseEntity.notFound().build();
+        Pedido pedido = optional.get();
+        pedido.setEntregadorId(entregadorId);
+        pedidoService.salvarPedido(pedido);
+        return ResponseEntity.ok(pedido);
+    }
+
+    // Buscar status e nome do entregador vinculado ao pedido via outro microserviço (Railway)
+    @GetMapping("/{pedidoId}/entregador-info")
+    public ResponseEntity<StatusEntregadorDTO> buscarEntregadorInfo(@PathVariable String pedidoId) {
+        Optional<Pedido> optional = pedidoService.consultarDetalhes(pedidoId);
+        if (optional.isEmpty() || optional.get().getEntregadorId() == null) return ResponseEntity.notFound().build();
+        String entregadorId = optional.get().getEntregadorId();
+        StatusEntregadorDTO dto = entregadorClient.buscarEntregadorPorId(entregadorId);
+        if (dto == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(dto);
+    }
+
+
 }
 
