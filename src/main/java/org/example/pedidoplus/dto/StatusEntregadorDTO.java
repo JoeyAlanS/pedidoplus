@@ -8,7 +8,7 @@ public class StatusEntregadorDTO {
     public StatusEntregadorDTO() {
     }
 
-    public StatusEntregadorDTO(String nomeEntregador, String statusEntrega) {
+    public StatusEntregadorDTO(String entregadorId, String nomeEntregador, String statusEntrega) {
         this.entregadorId = entregadorId;
         this.nomeEntregador = nomeEntregador;
         this.statusEntrega = statusEntrega;

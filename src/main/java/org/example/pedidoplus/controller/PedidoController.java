@@ -102,14 +102,17 @@ public class PedidoController {
         Pedido pedido = optPedido.get();
 
         if (pedido.getEntregadorId() == null) {
-            // Resposta mais amigável caso não tenha entregador
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Pedido ainda não possui entregador atribuído.");
         }
 
-        StatusEntregadorDTO dto = pedidoService.buscarStatusEntregador(pedido.getEntregadorId());
+        // Correção: passar entregadorId e pedidoId
+        StatusEntregadorDTO dto = pedidoService.buscarStatusEntregador(
+                pedido.getEntregadorId(), pedido.getId()
+        );
         return ResponseEntity.ok(dto);
     }
+
 
 
 
