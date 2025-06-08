@@ -7,6 +7,7 @@ import org.example.pedidoplus.dto.StatusEntregadorDTO;
 import org.example.pedidoplus.model.Pedido;
 import org.example.pedidoplus.repositories.PedidoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,76 +15,69 @@ import java.util.Optional;
 @Service
 public class PedidoService {
 
-    private final PedidoRepository repository;
+    private final PedidoRepository pedidoRepository;
     private final ClienteClient clienteClient;
     private final EntregadorClient entregadorClient;
 
-
-    public PedidoService(PedidoRepository repository, ClienteClient clienteClient, EntregadorClient entregadorClient) {
-        this.repository = repository;
+    public PedidoService(
+            PedidoRepository pedidoRepository,
+            ClienteClient clienteClient,
+            EntregadorClient entregadorClient
+    ) {
+        this.pedidoRepository = pedidoRepository;
         this.clienteClient = clienteClient;
         this.entregadorClient = entregadorClient;
-
     }
 
     public Pedido criarPedido(Pedido pedido) {
-        double total = pedido.getItens().stream()
-                .mapToDouble(item -> item.getPrecoUnitario() * item.getQuantidade())
-                .sum();
-        pedido.setValorTotal(total);
-
-        ClienteNomeDTO cliente = clienteClient.buscarClientePorId(pedido.getClienteId());
-        if (cliente != null) {
-            pedido.setClienteNome(cliente.getNome());
-        } else {
-            pedido.setClienteNome("Desconhecido");
+        if (pedido.getClienteId() == null || pedido.getClienteId().isEmpty()) {
+            throw new IllegalArgumentException("O clienteId deve ser informado ao criar um pedido.");
         }
 
-        String status = "PENDENTE";
-        if (pedido.getEntregadorId() != null) {
-            // Garante que tenha um ID do pedido (se estiver usando geração automática, salve primeiro para gerar o ID)
-            if (pedido.getId() == null) {
-                // Salva para gerar o ID antes de buscar o status (caso use MongoDB, _id pode ser gerado só depois)
-                pedido = repository.save(pedido);
-            }
-            StatusEntregadorDTO entregadorInfo = entregadorClient.buscarStatusEntregaPorEntregador(pedido.getEntregadorId(), pedido.getId());
-            if (entregadorInfo != null && entregadorInfo.getStatusEntrega() != null) {
-                status = entregadorInfo.getStatusEntrega();
-            }
+        // Busca as informações do cliente (preenche nome se possível)
+        ClienteNomeDTO clienteDTO = clienteClient.buscarClientePorId(pedido.getClienteId());
+        if (clienteDTO != null) {
+            pedido.setClienteNome(clienteDTO.getNome());
         }
-        pedido.setStatus(status);
 
-        return repository.save(pedido);
+        // Não atribui entregador nem status de entrega aqui! Aguarda o serviço de atribuição.
+        pedido.setEntregadorId(null);
+        pedido.setNomeEntregador(null);
+        pedido.setStatusEntrega("PENDENTE");
+
+        return pedidoRepository.save(pedido);
     }
 
-
     public List<Pedido> listarPedidosDoCliente(String clienteId) {
-        return repository.findByClienteId(clienteId);
+        return pedidoRepository.findByClienteId(clienteId);
     }
 
     public Optional<Pedido> consultarDetalhes(String pedidoId) {
-        return repository.findById(pedidoId);
+        return pedidoRepository.findById(pedidoId);
     }
 
     public Pedido salvarPedido(Pedido pedido) {
-        return repository.save(pedido);
+        return pedidoRepository.save(pedido);
     }
 
     public List<Pedido> listarTodosPedidos() {
-        return repository.findAll();
+        return pedidoRepository.findAll();
     }
 
-    public StatusEntregadorDTO buscarStatusEntregador(String entregadorId, String pedidoId) {
-        if (entregadorId == null) {
-            StatusEntregadorDTO dto = new StatusEntregadorDTO();
-            dto.setEntregadorId(null);
-            dto.setNomeEntregador(null);
-            dto.setStatusEntrega("PENDENTE (sem entregador atribuído)");
-            return dto;
+    // Agendamento para checar atribuições e atualizar pedidos
+    @Scheduled(fixedDelay = 60000) // Executa a cada 1 minuto
+    public void atualizarAtribuicoesDeEntregadores() {
+        List<Pedido> pendentes = pedidoRepository.findAll();
+        for (Pedido pedido : pendentes) {
+            if (pedido.getEntregadorId() == null || "PENDENTE".equalsIgnoreCase(pedido.getStatusEntrega())) {
+                StatusEntregadorDTO atribuido = entregadorClient.buscarAssignmentPorEntregadorId(pedido.getEntregadorId());
+                if (atribuido != null && atribuido.getEntregadorId() != null) {
+                    pedido.setEntregadorId(atribuido.getEntregadorId());
+                    pedido.setNomeEntregador(atribuido.getNomeEntregador());
+                    pedido.setStatusEntrega(atribuido.getStatusEntrega());
+                    pedidoRepository.save(pedido);
+                }
+            }
         }
-        return entregadorClient.buscarStatusEntregaPorEntregador(entregadorId, pedidoId);
     }
-
-
-
 }

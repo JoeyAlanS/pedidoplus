@@ -15,38 +15,36 @@ public class EntregadorClient {
 
     private final String BASE_URL = "https://reasonable-happiness-production.up.railway.app/";
 
-    // Agora recebe o pedidoId
-    public StatusEntregadorDTO buscarStatusEntregaPorEntregador(String entregadorId, String pedidoId) {
+    // Buscar assignments por entregadorId (ajustando ao controller)
+    @SuppressWarnings("unchecked")
+    public StatusEntregadorDTO buscarAssignmentPorEntregadorId(String entregadorId) {
+        String url = BASE_URL + "api/deliveries/deliverer/" + entregadorId + "/assignments";
+
         try {
-            String assignmentsUrl = BASE_URL + "api/deliveries/" + entregadorId + "/assignments";
-            List<Map<String, Object>> entregas = restTemplate.getForObject(assignmentsUrl, List.class);
+            List<Map<String, Object>> assignments = restTemplate.getForObject(url, List.class);
+            if (assignments != null && !assignments.isEmpty()) {
+                Map<String, Object> assignment = assignments.get(0); // Pega o primeiro assignment
+                String orderId = (String) assignment.get("orderId");
+                String status = (String) assignment.get("status");
+                String nomeEntregador = null;
 
-            String entregadorUrl = BASE_URL + "api/entregadores/" + entregadorId;
-            Map<String, Object> entregador = restTemplate.getForObject(entregadorUrl, Map.class);
-
-            String statusEntrega = null;
-            if (entregas != null && pedidoId != null) {
-                for (Map<String, Object> entrega : entregas) {
-                    String orderId = entrega.get("orderId") != null ? entrega.get("orderId").toString() : null;
-                    if (pedidoId.equals(orderId)) {
-                        statusEntrega = (String) entrega.get("status");
-                        break;
+                if (entregadorId != null) {
+                    String entregadorUrl = BASE_URL + "api/entregadores/" + entregadorId; // Corrigido!
+                    Map<String, Object> entregadorData = restTemplate.getForObject(entregadorUrl, Map.class);
+                    if (entregadorData != null) {
+                        nomeEntregador = (String) entregadorData.get("nome");
                     }
                 }
+
+                StatusEntregadorDTO dto = new StatusEntregadorDTO();
+                dto.setEntregadorId(entregadorId);
+                dto.setNomeEntregador(nomeEntregador);
+                dto.setStatusEntrega(status);
+                return dto;
             }
-
-            String nomeEntregador = entregador != null ? (String) entregador.get("nome") : null;
-
-            StatusEntregadorDTO dto = new StatusEntregadorDTO();
-            dto.setEntregadorId(entregadorId);
-            dto.setNomeEntregador(nomeEntregador);
-            dto.setStatusEntrega(statusEntrega);
-
-            return dto;
-
         } catch (Exception e) {
-            System.out.println("Erro ao buscar status do entregador: " + e.getMessage());
-            return new StatusEntregadorDTO();
+            // Log de erro pode ser adicionado se quiser
         }
+        return null;
     }
 }

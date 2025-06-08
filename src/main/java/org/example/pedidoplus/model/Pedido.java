@@ -1,9 +1,7 @@
 package org.example.pedidoplus.model;
 
-import org.example.pedidoplus.model.ItemPedido;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import java.util.List;
 
 @Document(collection = "Pedido")
@@ -16,8 +14,13 @@ public class Pedido {
     private Double valorTotal;
     private String status;
     private String entregadorId;
+    private String nomeEntregador;
+    private String statusEntrega;
 
+    // Construtor padrão
+    public Pedido() { }
 
+    // Getters e Setters
     public String getId() {
         return id;
     }
@@ -32,6 +35,14 @@ public class Pedido {
 
     public void setClienteId(String clienteId) {
         this.clienteId = clienteId;
+    }
+
+    public String getClienteNome() {
+        return clienteNome;
+    }
+
+    public void setClienteNome(String clienteNome) {
+        this.clienteNome = clienteNome;
     }
 
     public List<ItemPedido> getItens() {
@@ -58,14 +69,6 @@ public class Pedido {
         this.status = status;
     }
 
-    public String getClienteNome() {
-        return clienteNome;
-    }
-
-    public void setClienteNome(String clienteNome) {
-        this.clienteNome = clienteNome;
-    }
-
     public String getEntregadorId() {
         return entregadorId;
     }
@@ -74,5 +77,19 @@ public class Pedido {
         this.entregadorId = entregadorId;
     }
 
+    public String getNomeEntregador() {
+        return nomeEntregador;
+    }
 
+    public void setNomeEntregador(String nomeEntregador) {
+        this.nomeEntregador = nomeEntregador;
+    }
+
+    public String getStatusEntrega() {
+        return statusEntrega;
+    }
+
+    public void setStatusEntrega(String statusEntrega) {
+        this.statusEntrega = statusEntrega;
+    }
 }
