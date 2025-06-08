@@ -18,7 +18,7 @@ public class EntregadorClient {
     // Agora recebe o pedidoId
     public StatusEntregadorDTO buscarStatusEntregaPorEntregador(String entregadorId, String pedidoId) {
         try {
-            String assignmentsUrl = BASE_URL + "api/deliveries/deliverer/" + entregadorId + "/assignments";
+            String assignmentsUrl = BASE_URL + "api/deliveries/" + entregadorId + "/assignments";
             List<Map<String, Object>> entregas = restTemplate.getForObject(assignmentsUrl, List.class);
 
             String entregadorUrl = BASE_URL + "api/entregadores/" + entregadorId;
