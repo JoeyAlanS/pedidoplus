@@ -39,10 +39,14 @@ public class PedidoService {
             pedido.setClienteNome("Desconhecido");
         }
 
-        // Busca o status do entregador, se houver entregador
         String status = "PENDENTE";
         if (pedido.getEntregadorId() != null) {
-            StatusEntregadorDTO entregadorInfo = entregadorClient.buscarStatusEntregaPorEntregador(pedido.getEntregadorId());
+            // Garante que tenha um ID do pedido (se estiver usando geração automática, salve primeiro para gerar o ID)
+            if (pedido.getId() == null) {
+                // Salva para gerar o ID antes de buscar o status (caso use MongoDB, _id pode ser gerado só depois)
+                pedido = repository.save(pedido);
+            }
+            StatusEntregadorDTO entregadorInfo = entregadorClient.buscarStatusEntregaPorEntregador(pedido.getEntregadorId(), pedido.getId());
             if (entregadorInfo != null && entregadorInfo.getStatusEntrega() != null) {
                 status = entregadorInfo.getStatusEntrega();
             }
@@ -51,6 +55,7 @@ public class PedidoService {
 
         return repository.save(pedido);
     }
+
 
     public List<Pedido> listarPedidosDoCliente(String clienteId) {
         return repository.findByClienteId(clienteId);

@@ -15,21 +15,25 @@ public class EntregadorClient {
 
     private final String BASE_URL = "https://reasonable-happiness-production.up.railway.app/";
 
-    // NOVO: Busca as atribuições do entregador e o nome dele
-    public StatusEntregadorDTO buscarStatusEntregaPorEntregador(String entregadorId) {
+    // Agora recebe o pedidoId
+    public StatusEntregadorDTO buscarStatusEntregaPorEntregador(String entregadorId, String pedidoId) {
         try {
-            // Busca as atribuições (entregas) do entregador
             String assignmentsUrl = BASE_URL + "api/deliveries/deliverer/" + entregadorId + "/assignments";
             List<Map<String, Object>> entregas = restTemplate.getForObject(assignmentsUrl, List.class);
 
-            // Busca os dados do entregador para pegar o nome
             String entregadorUrl = BASE_URL + "api/entregadores/" + entregadorId;
             Map<String, Object> entregador = restTemplate.getForObject(entregadorUrl, Map.class);
 
             String statusEntrega = null;
-            if (entregas != null && !entregas.isEmpty()) {
-                // Supondo que cada entrega tem o campo "status"
-                statusEntrega = (String) entregas.get(0).get("status");
+            if (entregas != null && pedidoId != null) {
+                for (Map<String, Object> entrega : entregas) {
+                    // Certifique-se que o campo é esse mesmo na resposta do endpoint!
+                    String orderId = entrega.get("orderId") != null ? entrega.get("orderId").toString() : null;
+                    if (pedidoId.equals(orderId)) {
+                        statusEntrega = (String) entrega.get("status");
+                        break;
+                    }
+                }
             }
 
             String nomeEntregador = entregador != null ? (String) entregador.get("nome") : null;
