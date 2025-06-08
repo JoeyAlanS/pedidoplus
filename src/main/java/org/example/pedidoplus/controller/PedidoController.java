@@ -95,7 +95,7 @@ public class PedidoController {
         Optional<Pedido> optional = pedidoService.consultarDetalhes(pedidoId);
         if (optional.isEmpty() || optional.get().getEntregadorId() == null) return ResponseEntity.notFound().build();
         String entregadorId = optional.get().getEntregadorId();
-        StatusEntregadorDTO dto = entregadorClient.buscarEntregadorPorId(entregadorId);
+        StatusEntregadorDTO dto = entregadorClient.buscarStatusEntregaPorEntregador(entregadorId);
         if (dto == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(dto);
     }

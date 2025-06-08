@@ -42,7 +42,7 @@ public class PedidoService {
         // Busca o status do entregador, se houver entregador
         String status = "PENDENTE";
         if (pedido.getEntregadorId() != null) {
-            StatusEntregadorDTO entregadorInfo = entregadorClient.buscarEntregadorPorId(pedido.getEntregadorId());
+            StatusEntregadorDTO entregadorInfo = entregadorClient.buscarStatusEntregaPorEntregador(pedido.getEntregadorId());
             if (entregadorInfo != null && entregadorInfo.getStatusEntrega() != null) {
                 status = entregadorInfo.getStatusEntrega();
             }
