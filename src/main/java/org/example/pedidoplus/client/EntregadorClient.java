@@ -27,7 +27,6 @@ public class EntregadorClient {
             String statusEntrega = null;
             if (entregas != null && pedidoId != null) {
                 for (Map<String, Object> entrega : entregas) {
-                    // Certifique-se que o campo é esse mesmo na resposta do endpoint!
                     String orderId = entrega.get("orderId") != null ? entrega.get("orderId").toString() : null;
                     if (pedidoId.equals(orderId)) {
                         statusEntrega = (String) entrega.get("status");
