@@ -68,4 +68,16 @@ public class PedidoService {
         return repository.findAll();
     }
 
+    public StatusEntregadorDTO buscarStatusEntregador(String entregadorId) {
+        if (entregadorId == null) {
+            StatusEntregadorDTO dto = new StatusEntregadorDTO();
+            dto.setEntregadorId(null);
+            dto.setNomeEntregador(null);
+            dto.setStatusEntrega("PENDENTE (sem entregador atribuído)");
+            return dto;
+        }
+        return entregadorClient.buscarStatusEntregaPorEntregador(entregadorId);
+    }
+
+
 }

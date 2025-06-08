@@ -8,6 +8,7 @@ import org.example.pedidoplus.dto.ItemCardapioDTO;
 import org.example.pedidoplus.dto.StatusEntregadorDTO;
 import org.example.pedidoplus.model.Pedido;
 import org.example.pedidoplus.service.PedidoService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -91,14 +92,25 @@ public class PedidoController {
 
     // Buscar status e nome do entregador vinculado ao pedido via outro microserviço (Railway)
     @GetMapping("/{pedidoId}/entregador-info")
-    public ResponseEntity<StatusEntregadorDTO> buscarEntregadorInfo(@PathVariable String pedidoId) {
-        Optional<Pedido> optional = pedidoService.consultarDetalhes(pedidoId);
-        if (optional.isEmpty() || optional.get().getEntregadorId() == null) return ResponseEntity.notFound().build();
-        String entregadorId = optional.get().getEntregadorId();
-        StatusEntregadorDTO dto = entregadorClient.buscarStatusEntregaPorEntregador(entregadorId);
-        if (dto == null) return ResponseEntity.notFound().build();
+    public ResponseEntity<?> buscarEntregadorInfo(@PathVariable String pedidoId) {
+        Optional<Pedido> optPedido = pedidoService.consultarDetalhes(pedidoId);
+
+        if (optPedido.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Pedido não encontrado.");
+        }
+        Pedido pedido = optPedido.get();
+
+        if (pedido.getEntregadorId() == null) {
+            // Resposta mais amigável caso não tenha entregador
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Pedido ainda não possui entregador atribuído.");
+        }
+
+        StatusEntregadorDTO dto = pedidoService.buscarStatusEntregador(pedido.getEntregadorId());
         return ResponseEntity.ok(dto);
     }
+
 
 
 }
