@@ -17,10 +17,8 @@ public class Pedido {
     private String nomeEntregador;
     private String statusEntrega;
 
-    // Construtor padrão
     public Pedido() { }
 
-    // Getters e Setters
     public String getId() {
         return id;
     }

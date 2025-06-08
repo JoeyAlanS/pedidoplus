@@ -1,6 +1,7 @@
 package org.example.pedidoplus.client;
 
 import org.example.pedidoplus.dto.ItemCardapioDTO;
+import org.example.pedidoplus.dto.RestauranteResumoDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -12,24 +13,52 @@ import java.util.List;
 @Component
 public class RestauranteClient {
 
-    private static final String BASE_URL = "https://restaurante-production-7756.up.railway.app/itensCardapio";
+    private static final String BASE_URL = "https://restaurante-production-7756.up.railway.app/";
 
     @Autowired
     private RestTemplate restTemplate;
 
-    public List<ItemCardapioDTO> listarItensCardapio() {
+    public List<RestauranteResumoDTO> listarRestaurantes() {
+        String url = BASE_URL + "restaurante";
         try {
-            System.out.println("Buscando itens do cardápio na URL: " + BASE_URL);
-            ItemCardapioDTO[] itens = restTemplate.getForObject(BASE_URL, ItemCardapioDTO[].class);
-            System.out.println("Retorno RestauranteClient: " + (itens != null ? Arrays.toString(itens) : "null"));
+            RestauranteResumoDTO[] restaurantes = restTemplate.getForObject(url, RestauranteResumoDTO[].class);
+            if (restaurantes != null) {
+                return Arrays.asList(restaurantes);
+            } else {
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao buscar restaurantes: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public List<ItemCardapioDTO> listarItensCardapio() {
+        String url = BASE_URL + "itensCardapio";
+        try {
+            ItemCardapioDTO[] itens = restTemplate.getForObject(url, ItemCardapioDTO[].class);
             if (itens != null) {
                 return Arrays.asList(itens);
             } else {
-                System.out.println("Cardápio retornou nulo.");
                 return Collections.emptyList();
             }
         } catch (Exception e) {
             System.out.println("Erro ao buscar itens do cardápio: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public List<ItemCardapioDTO> listarItensCardapioPorRestaurante(String restauranteId) {
+        String url = BASE_URL + "itensCardapio/restaurante/" + restauranteId;
+        try {
+            ItemCardapioDTO[] itens = restTemplate.getForObject(url, ItemCardapioDTO[].class);
+            if (itens != null) {
+                return Arrays.asList(itens);
+            } else {
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao buscar itens do cardápio por restaurante: " + e.getMessage());
             return Collections.emptyList();
         }
     }

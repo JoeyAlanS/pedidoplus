@@ -34,19 +34,27 @@ public class PedidoService {
             throw new IllegalArgumentException("O clienteId deve ser informado ao criar um pedido.");
         }
 
-        // Busca as informações do cliente (preenche nome se possível)
         ClienteNomeDTO clienteDTO = clienteClient.buscarClientePorId(pedido.getClienteId());
         if (clienteDTO != null) {
             pedido.setClienteNome(clienteDTO.getNome());
         }
 
-        // Não atribui entregador nem status de entrega aqui! Aguarda o serviço de atribuição.
+        if (pedido.getItens() != null && !pedido.getItens().isEmpty()) {
+            double valorTotal = pedido.getItens().stream()
+                    .mapToDouble(item -> (item.getPrecoUnitario() != null ? item.getPrecoUnitario() : 0.0) * item.getQuantidade())
+                    .sum();
+            pedido.setValorTotal(valorTotal);
+        } else {
+            pedido.setValorTotal(0.0);
+        }
+
         pedido.setEntregadorId(null);
         pedido.setNomeEntregador(null);
         pedido.setStatusEntrega("PENDENTE");
 
         return pedidoRepository.save(pedido);
     }
+
 
     public List<Pedido> listarPedidosDoCliente(String clienteId) {
         return pedidoRepository.findByClienteId(clienteId);
@@ -57,15 +65,26 @@ public class PedidoService {
     }
 
     public Pedido salvarPedido(Pedido pedido) {
+        if (pedido.getItens() != null && !pedido.getItens().isEmpty()) {
+            double valorTotal = pedido.getItens().stream()
+                    .mapToDouble(item ->
+                            (item.getPrecoUnitario() != null ? item.getPrecoUnitario() : 0.0) *
+                                    (item.getQuantidade() != null ? item.getQuantidade() : 0)
+                    )
+                    .sum();
+            pedido.setValorTotal(valorTotal);
+        } else {
+            pedido.setValorTotal(0.0);
+        }
         return pedidoRepository.save(pedido);
     }
+
 
     public List<Pedido> listarTodosPedidos() {
         return pedidoRepository.findAll();
     }
 
-    // Agendamento para checar atribuições e atualizar pedidos
-    @Scheduled(fixedDelay = 60000) // Executa a cada 1 minuto
+    @Scheduled(fixedDelay = 60000)
     public void atualizarAtribuicoesDeEntregadores() {
         List<Pedido> pendentes = pedidoRepository.findAll();
         for (Pedido pedido : pendentes) {

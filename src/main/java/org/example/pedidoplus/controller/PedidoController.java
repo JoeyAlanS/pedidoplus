@@ -91,11 +91,21 @@ public class PedidoController {
     public ResponseEntity<Pedido> atualizarPedido(@PathVariable String pedidoId, @RequestBody Pedido pedidoAtualizado) {
         return pedidoService.consultarDetalhes(pedidoId)
                 .map(pedidoExistente -> {
-                    // Atualize apenas os campos necessários
                     pedidoExistente.setClienteId(pedidoAtualizado.getClienteId());
                     pedidoExistente.setClienteNome(pedidoAtualizado.getClienteNome());
                     pedidoExistente.setItens(pedidoAtualizado.getItens());
-                    pedidoExistente.setValorTotal(pedidoAtualizado.getValorTotal());
+                    // Recalcule o valor total baseado nos itens atualizados
+                    double novoValorTotal = 0.0;
+                    if (pedidoAtualizado.getItens() != null) {
+                        novoValorTotal = pedidoAtualizado.getItens().stream()
+                                .mapToDouble(item -> {
+                                    Double valorUni = item.getPrecoUnitario() != null ? item.getPrecoUnitario() : 0.0;
+                                    Integer qtd = item.getQuantidade() != null ? item.getQuantidade() : 0;
+                                    return valorUni * qtd;
+                                }).sum();
+                    }
+                    pedidoExistente.setValorTotal(novoValorTotal); // Aqui NÃO usa o do request!
+
                     pedidoExistente.setStatus(pedidoAtualizado.getStatus());
                     pedidoExistente.setEntregadorId(pedidoAtualizado.getEntregadorId());
                     pedidoExistente.setNomeEntregador(pedidoAtualizado.getNomeEntregador());
@@ -105,6 +115,19 @@ public class PedidoController {
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/restaurantes")
+    public List<org.example.pedidoplus.dto.RestauranteResumoDTO> listarRestaurantes() {
+        return restauranteClient.listarRestaurantes();
+    }
+
+    // Endpoint para listar o cardápio de um restaurante específico
+    @GetMapping("/restaurantes/{id}/cardapio")
+    public List<ItemCardapioDTO> listarCardapioRestaurante(@PathVariable String id) {
+        return restauranteClient.listarItensCardapioPorRestaurante(id);
+    }
+
+
 
 
 }

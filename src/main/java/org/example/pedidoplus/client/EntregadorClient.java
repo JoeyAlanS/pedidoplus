@@ -15,7 +15,6 @@ public class EntregadorClient {
 
     private final String BASE_URL = "https://reasonable-happiness-production.up.railway.app/";
 
-    // Buscar assignments por entregadorId (ajustando ao controller)
     @SuppressWarnings("unchecked")
     public StatusEntregadorDTO buscarAssignmentPorEntregadorId(String entregadorId) {
         String url = BASE_URL + "api/deliveries/deliverer/" + entregadorId + "/assignments";
@@ -23,13 +22,13 @@ public class EntregadorClient {
         try {
             List<Map<String, Object>> assignments = restTemplate.getForObject(url, List.class);
             if (assignments != null && !assignments.isEmpty()) {
-                Map<String, Object> assignment = assignments.get(0); // Pega o primeiro assignment
+                Map<String, Object> assignment = assignments.get(0);
                 String orderId = (String) assignment.get("orderId");
                 String status = (String) assignment.get("status");
                 String nomeEntregador = null;
 
                 if (entregadorId != null) {
-                    String entregadorUrl = BASE_URL + "api/entregadores/" + entregadorId; // Corrigido!
+                    String entregadorUrl = BASE_URL + "api/entregadores/" + entregadorId;
                     Map<String, Object> entregadorData = restTemplate.getForObject(entregadorUrl, Map.class);
                     if (entregadorData != null) {
                         nomeEntregador = (String) entregadorData.get("nome");
@@ -43,7 +42,6 @@ public class EntregadorClient {
                 return dto;
             }
         } catch (Exception e) {
-            // Log de erro pode ser adicionado se quiser
         }
         return null;
     }

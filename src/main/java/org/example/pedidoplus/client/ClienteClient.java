@@ -15,7 +15,7 @@ public class ClienteClient {
 
     public ClienteNomeDTO buscarClientePorId(String clienteId) {
         try {
-            String url = BASE_URL + "/" + clienteId; // CORREÇÃO AQUI
+            String url = BASE_URL + "/" + clienteId;
             System.out.println("Buscando cliente na URL: " + url);
             ClienteNomeDTO cliente = restTemplate.getForObject(url, ClienteNomeDTO.class);
             System.out.println("Retorno client: " + (cliente != null ? cliente.getNome() : "null"));

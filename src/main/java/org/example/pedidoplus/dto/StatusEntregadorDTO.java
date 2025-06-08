@@ -5,7 +5,6 @@ public class StatusEntregadorDTO {
     private String nomeEntregador;
     private String statusEntrega;
 
-    // Getters e Setters
     public String getEntregadorId() { return entregadorId; }
     public void setEntregadorId(String entregadorId) { this.entregadorId = entregadorId; }
     public String getNomeEntregador() { return nomeEntregador; }
